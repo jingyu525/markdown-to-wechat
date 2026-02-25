@@ -23,7 +23,7 @@ pip install markdown-to-wechat
 ### 从源码安装
 
 ```bash
-git clone https://github.com/yourusername/markdown-to-wechat.git
+git clone https://github.com/jingyu525/markdown-to-wechat.git
 cd markdown-to-wechat
 pip install -e .
 ```
@@ -259,13 +259,13 @@ TITLE_PREFIX_TO_REMOVE = '自定义前缀'
 
 ## 📮 联系方式
 
-- 作者：Your Name
-- 邮箱：your.email@example.com
-- GitHub：[https://github.com/yourusername/markdown-to-wechat](https://github.com/yourusername/markdown-to-wechat)
+- 作者：疯狂的小宇宙
+- 邮箱：jingyu525@gmail.com
+- GitHub：[https://github.com/jingyu525/markdown-to-wechat](https://github.com/jingyu525/markdown-to-wechat)
 
 ## 🐛 问题反馈
 
-如果遇到问题或有功能建议，请在 [GitHub Issues](https://github.com/yourusername/markdown-to-wechat/issues) 中提交。
+如果遇到问题或有功能建议，请在 [GitHub Issues](https://github.com/jingyu525/markdown-to-wechat/issues) 中提交。
 
 ---
 
