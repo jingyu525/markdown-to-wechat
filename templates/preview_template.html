@@ -4,9 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{TITLE}}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom animations */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 50%, #e5e7eb 100%);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -17,23 +28,16 @@
             50% { transform: scale(1.05); }
         }
         
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
         
-        .pulse-animation {
-            animation: pulse 0.3s ease-out;
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
         
-        /* Content container styles */
-        .content-container {
-            background: white;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        /* Toast notification */
         .toast {
             position: fixed;
             top: 20px;
@@ -49,80 +53,60 @@
             animation: slideIn 0.3s ease-out;
         }
         
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+        .toast.show { display: flex; align-items: center; gap: 12px; }
+        .toast.hide { animation: slideOut 0.3s ease-out forwards; }
+        
+        header {
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
         
-        @keyframes slideOut {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
-        .toast.show {
-            display: block;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
-        .toast.hide {
-            animation: slideOut 0.3s ease-out forwards;
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        /* Responsive content area */
-        .preview-content {
-            max-height: 70vh;
-            overflow-y: auto;
-            padding: 40px;
-        }
+        .logo svg { width: 24px; height: 24px; color: white; }
         
-        /* Custom scrollbar */
-        .preview-content::-webkit-scrollbar {
-            width: 8px;
-        }
+        .header-title { font-size: 20px; font-weight: 700; color: #1f2937; }
+        .header-subtitle { font-size: 14px; color: #6b7280; }
         
-        .preview-content::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-        
-        .preview-content::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 4px;
-        }
-        
-        .preview-content::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #5568d3 0%, #6a4091 100%);
-        }
-        
-        /* Button hover effects */
-        .btn-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-gradient:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-gradient:active {
-            transform: translateY(0);
-        }
+        .header-right { display: flex; gap: 8px; }
         
         .btn-secondary {
             background: white;
             border: 2px solid #e5e7eb;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
         
@@ -132,106 +116,211 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
         }
+        
+        .btn-secondary svg { width: 20px; height: 20px; }
+        
+        main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 32px 16px;
+        }
+        
+        .action-bar {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px 32px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-gradient svg { width: 24px; height: 24px; }
+        
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        @media (max-width: 768px) {
+            .info-cards { grid-template-columns: 1fr; }
+        }
+        
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .info-card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .info-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .info-icon svg { width: 24px; height: 24px; }
+        .info-icon.blue { background: #dbeafe; color: #2563eb; }
+        .info-icon.yellow { background: #fef3c7; color: #d97706; }
+        .info-icon.green { background: #d1fae5; color: #059669; }
+        
+        .info-card h3 { font-weight: 600; color: #1f2937; }
+        .info-card p { color: #4b5563; font-size: 14px; line-height: 1.6; }
+        
+        .content-container {
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .content-header {
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .content-header span:first-child { font-weight: 500; }
+        .content-header span:last-child { font-size: 14px; opacity: 0.8; }
+        
+        .preview-content {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding: 40px;
+        }
+        
+        .preview-content::-webkit-scrollbar { width: 8px; }
+        .preview-content::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .preview-content::-webkit-scrollbar-thumb { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; }
+        
+        footer {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 32px 16px;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 min-h-screen">
-    <!-- Header -->
-    <header class="bg-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h1 class="text-xl font-bold text-gray-800">{{TITLE}}</h1>
-                        <p class="text-sm text-gray-500">微信富文本预览</p>
-                    </div>
+<body>
+    <header>
+        <div class="header-inner">
+            <div class="header-left">
+                <div class="logo">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+                    </svg>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="openInNewWindow()" class="btn-secondary px-4 py-2 rounded-lg font-medium text-gray-700 flex items-center space-x-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                        <span>新窗口打开</span>
-                    </button>
-                    <button onclick="downloadHTML()" class="btn-secondary px-4 py-2 rounded-lg font-medium text-gray-700 flex items-center space-x-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                        </svg>
-                        <span>下载HTML</span>
-                    </button>
+                <div>
+                    <div class="header-title">{{TITLE}}</div>
+                    <div class="header-subtitle">微信富文本预览</div>
                 </div>
+            </div>
+            <div class="header-right">
+                <button onclick="openInNewWindow()" class="btn-secondary">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    <span>新窗口打开</span>
+                </button>
+                <button onclick="downloadHTML()" class="btn-secondary">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    <span>下载HTML</span>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Action Bar -->
-        <div class="mb-8 flex justify-center">
-            <button onclick="copyContent()" id="copyBtn" class="btn-gradient px-8 py-4 rounded-xl text-white font-bold text-lg flex items-center space-x-3 shadow-xl">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <main>
+        <div class="action-bar">
+            <button onclick="copyContent()" id="copyBtn" class="btn-gradient">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
                 </svg>
                 <span>复制全部内容</span>
             </button>
         </div>
 
-        <!-- Info Cards -->
-        <div class="grid md:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="info-cards">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-icon blue">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <h3 class="font-semibold text-gray-800">使用说明</h3>
+                    <h3>使用说明</h3>
                 </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    点击上方"复制全部内容"按钮，将内容复制到剪贴板，然后粘贴到微信公众号编辑器中。
-                </p>
+                <p>点击上方"复制全部内容"按钮，将内容复制到剪贴板，然后粘贴到微信公众号编辑器中。</p>
             </div>
             
-            <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-icon yellow">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                         </svg>
                     </div>
-                    <h3 class="font-semibold text-gray-800">注意事项</h3>
+                    <h3>注意事项</h3>
                 </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    请将文档中的图片上传到微信公众号素材库，然后替换对应的占位符链接。
-                </p>
+                <p>请将文档中的图片上传到微信公众号素材库，然后替换对应的占位符链接。</p>
             </div>
             
-            <div class="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
-                <div class="flex items-center space-x-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-icon green">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <h3 class="font-semibold text-gray-800">快速预览</h3>
+                    <h3>快速预览</h3>
                 </div>
-                <p class="text-gray-600 text-sm leading-relaxed">
-                    在浏览器中预览文章效果，确认样式和格式无误后再复制到微信公众号。
-                </p>
+                <p>在浏览器中预览文章效果，确认样式和格式无误后再复制到微信公众号。</p>
             </div>
         </div>
 
-        <!-- Content Preview -->
         <div class="content-container">
-            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3">
-                <div class="flex items-center justify-between">
-                    <span class="font-medium">文章内容预览</span>
-                    <span class="text-sm opacity-80">以下内容可直接复制</span>
-                </div>
+            <div class="content-header">
+                <span>文章内容预览</span>
+                <span>以下内容可直接复制</span>
             </div>
             <div class="preview-content" id="contentArea">
                 {{CONTENT}}
@@ -239,25 +328,18 @@
         </div>
     </main>
 
-    <!-- Toast Notification -->
     <div id="toast" class="toast">
-        <div class="flex items-center space-x-3">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-            <span>内容已复制到剪贴板！</span>
-        </div>
+        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span>内容已复制到剪贴板！</span>
     </div>
 
-    <!-- Footer -->
-    <footer class="max-w-7xl mx-auto px-4 py-8 mt-8 text-center">
-        <p class="text-gray-500 text-sm">
-            由 Markdown 转换生成 | 适用于微信公众号编辑器
-        </p>
+    <footer>
+        <p>由 Markdown 转换生成 | 适用于微信公众号编辑器</p>
     </footer>
 
     <script>
-        // Copy content to clipboard using modern Clipboard API
         async function copyContent() {
             const content = document.getElementById('contentArea');
             const range = document.createRange();
@@ -271,13 +353,6 @@
                 const item = new ClipboardItem({ 'text/html': blob });
                 await navigator.clipboard.write([item]);
                 showToast('内容已复制到剪贴板！');
-                
-                // Button animation
-                const btn = document.getElementById('copyBtn');
-                btn.classList.add('pulse-animation');
-                setTimeout(() => {
-                    btn.classList.remove('pulse-animation');
-                }, 300);
             } catch (err) {
                 showToast('复制失败，请手动选择复制', 'error');
             }
@@ -285,8 +360,8 @@
             window.getSelection().removeAllRanges();
         }
         
-        // Show toast notification
-        function showToast(message, type = 'success') {
+        function showToast(message, type) {
+            type = type || 'success';
             const toast = document.getElementById('toast');
             const toastText = toast.querySelector('span');
             
@@ -294,53 +369,28 @@
             toast.classList.remove('hide');
             toast.classList.add('show');
             
-            // Update color based on type
             if (type === 'error') {
                 toast.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
             } else {
                 toast.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
             }
             
-            setTimeout(() => {
+            setTimeout(function() {
                 toast.classList.remove('show');
                 toast.classList.add('hide');
             }, 3000);
         }
         
-        // Open in new window
         function openInNewWindow() {
             const content = document.getElementById('contentArea').innerHTML;
             const newWindow = window.open('', '_blank');
-            newWindow.document.write(`
-                <!DOCTYPE html>
-                <html lang="zh-CN">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>预览</title>
-                </head>
-                <body style="padding: 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-                    ${content}
-                </body>
-                </html>
-            `);
+            newWindow.document.write('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>预览</title></head><body style="padding: 40px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif;">' + content + '</body></html>');
             newWindow.document.close();
         }
         
-        // Download HTML file
         function downloadHTML() {
             const content = document.getElementById('contentArea').innerHTML;
-            const fullHtml = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{TITLE}}</title>
-</head>
-<body>
-${content}
-</body>
-</html>`;
+            const fullHtml = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{TITLE}}</title></head><body>' + content + '</body></html>';
             
             const blob = new Blob([fullHtml], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
@@ -355,27 +405,11 @@ ${content}
             showToast('HTML 文件已下载！');
         }
         
-        // Keyboard shortcut
         document.addEventListener('keydown', function(e) {
-            // Cmd/Ctrl + Shift + C to copy
             if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'C') {
                 e.preventDefault();
                 copyContent();
             }
-        });
-        
-        // Smooth scroll for content area
-        document.addEventListener('DOMContentLoaded', function() {
-            const links = document.querySelectorAll('a[href^="#"]');
-            links.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                });
-            });
         });
     </script>
 </body>
