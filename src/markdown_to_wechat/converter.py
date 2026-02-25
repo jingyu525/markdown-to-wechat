@@ -311,6 +311,8 @@ class MarkdownToWeChatConverter:
                 if in_code_block:
                     # End code block
                     code_html = html.escape('\n'.join(code_buffer))
+                    code_html = code_html.replace(' ', '&nbsp;')
+                    code_html = code_html.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
                     html_lines.append(
                         f'<pre style="background-color:#f4f4f4;border:1px solid #ddd;border-radius:5px;padding:15px;margin:20px 0;overflow-x:auto;font-size:14px;line-height:1.5;"><code style="background-color:transparent;padding:0;border-radius:0;">{code_html}</code></pre>'
                     )
@@ -451,6 +453,22 @@ class MarkdownToWeChatConverter:
             r'<pre>',
             '<pre style="background-color:#f4f4f4;border:1px solid #ddd;border-radius:5px;padding:15px;margin:20px 0;overflow-x:auto;font-size:14px;line-height:1.5;">',
             html_content
+        )
+
+        # Fix spaces in code blocks for WeChat editor (WeChat compresses normal spaces)
+        def fix_pre_code_spaces(match: re.Match) -> str:
+            pre_attrs = match.group(1) or ''
+            code_attrs = match.group(2) or ''
+            code_content = match.group(3)
+            code_content = code_content.replace(' ', '&nbsp;')
+            code_content = code_content.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+            return f'<pre{pre_attrs}><code{code_attrs}>{code_content}</code></pre>'
+
+        html_content = re.sub(
+            r'<pre([^>]*)>\s*<code([^>]*)>(.*?)</code>\s*</pre>',
+            fix_pre_code_spaces,
+            html_content,
+            flags=re.S
         )
 
         # Process blockquotes
