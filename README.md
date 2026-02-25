@@ -92,11 +92,9 @@ markdown_text = """
 
 - 列表项 1
 - 列表项 2
-
-```python
-print('Hello, WeChat!')
-```
 """
+
+print('Hello, WeChat!')
 
 html_content = converter.convert(markdown_text)
 
