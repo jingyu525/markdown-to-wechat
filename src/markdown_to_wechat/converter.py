@@ -456,17 +456,29 @@ class MarkdownToWeChatConverter:
         )
 
         # Fix spaces in code blocks for WeChat editor (WeChat compresses normal spaces)
-        def fix_pre_code_spaces(match: re.Match) -> str:
+        # Only replace spaces in text content, not in HTML attributes
+        def fix_pre_spaces(match: re.Match) -> str:
             pre_attrs = match.group(1) or ''
-            code_attrs = match.group(2) or ''
-            code_content = match.group(3)
-            code_content = code_content.replace(' ', '&nbsp;')
-            code_content = code_content.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
-            return f'<pre{pre_attrs}><code{code_attrs}>{code_content}</code></pre>'
+            inner_content = match.group(2)
+            
+            # Check if there's a <code> tag inside
+            code_match = re.match(r'^\s*(<code[^>]*>)(.*?)(</code>)\s*$', inner_content, re.S)
+            if code_match:
+                code_open = code_match.group(1)
+                code_content = code_match.group(2)
+                code_close = code_match.group(3)
+                code_content = code_content.replace(' ', '&nbsp;')
+                code_content = code_content.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+                return f'<pre{pre_attrs}>{code_open}{code_content}{code_close}</pre>'
+            else:
+                # No <code> tag, replace spaces directly
+                inner_content = inner_content.replace(' ', '&nbsp;')
+                inner_content = inner_content.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
+                return f'<pre{pre_attrs}>{inner_content}</pre>'
 
         html_content = re.sub(
-            r'<pre([^>]*)>\s*<code([^>]*)>(.*?)</code>\s*</pre>',
-            fix_pre_code_spaces,
+            r'<pre([^>]*)>(.*?)</pre>',
+            fix_pre_spaces,
             html_content,
             flags=re.S
         )
