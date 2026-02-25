@@ -22,6 +22,127 @@ class MarkdownToWeChatConverter:
         """Initialize the converter with default CSS styles."""
         self.css_styles = get_wechat_css()
 
+    def _is_markdown_list_line(self, line: str) -> bool:
+        stripped = line.lstrip()
+        if re.match(r'^(\-|\*|\+)\s+', stripped):
+            return True
+        return re.match(r'^\d+\.\s+', stripped) is not None
+
+    def _normalize_list_spacing(self, markdown_text: str) -> str:
+        lines = markdown_text.split('\n')
+        result = []
+        in_code_block = False
+        prev_was_list = False
+        prev_was_blank = True
+
+        for line in lines:
+            stripped = line.strip()
+
+            if stripped.startswith('```'):
+                in_code_block = not in_code_block
+                result.append(line)
+                prev_was_list = False
+                prev_was_blank = stripped == ''
+                continue
+
+            if in_code_block:
+                result.append(line)
+                prev_was_list = False
+                prev_was_blank = stripped == ''
+                continue
+
+            is_list_line = self._is_markdown_list_line(line)
+
+            if is_list_line and not prev_was_list and not prev_was_blank:
+                result.append('')
+
+            if prev_was_list and not is_list_line and stripped and not prev_was_blank:
+                result.append('')
+
+            result.append(line)
+            prev_was_list = is_list_line
+            prev_was_blank = stripped == ''
+
+        return '\n'.join(result)
+
+    def _strip_leading_breaks(self, text: str) -> str:
+        return re.sub(r'^(<br\s*/?>\s*)+', '', text, flags=re.IGNORECASE)
+
+    def _get_html_list_type(self, line: str) -> Optional[str]:
+        cleaned = self._strip_leading_breaks(line).strip()
+        if re.match(r'^(\-|\*|\+)\s+', cleaned):
+            return 'ul'
+        if re.match(r'^\d+\.\s+', cleaned):
+            return 'ol'
+        return None
+
+    def _strip_html_list_marker(self, line: str, list_type: str) -> str:
+        cleaned = self._strip_leading_breaks(line).strip()
+        if list_type == 'ol':
+            return re.sub(r'^\d+\.\s+', '', cleaned, count=1)
+        return re.sub(r'^(\-|\*|\+)\s+', '', cleaned, count=1)
+
+    def _fix_paragraph_lists(self, html_content: str) -> str:
+        def replace_paragraph(match: re.Match) -> str:
+            inner = match.group(1)
+            lines = inner.split('\n')
+            list_type = None
+            first_index = None
+
+            for index, line in enumerate(lines):
+                current_type = self._get_html_list_type(line)
+                if current_type:
+                    list_type = current_type
+                    first_index = index
+                    break
+
+            if list_type is None:
+                return match.group(0)
+
+            list_lines = []
+            index = first_index
+            while index < len(lines):
+                line = lines[index]
+                current_type = self._get_html_list_type(line)
+                if current_type:
+                    if current_type != list_type:
+                        return match.group(0)
+                    list_lines.append(line)
+                elif line.strip() == '':
+                    pass
+                else:
+                    break
+                index += 1
+
+            if not list_lines:
+                return match.group(0)
+
+            before_html = '\n'.join(lines[:first_index]).strip()
+            after_html = '\n'.join(lines[index:]).strip()
+
+            list_items = [
+                self._strip_html_list_marker(line, list_type)
+                for line in list_lines
+            ]
+            list_items = [item for item in list_items if item.strip()]
+
+            if not list_items:
+                return match.group(0)
+
+            parts = []
+            if before_html:
+                parts.append(f'<p>{before_html}</p>')
+
+            list_html = ''.join([f'<li>{item}</li>' for item in list_items])
+            parts.append(f'<{list_type}>{list_html}</{list_type}>')
+
+            if after_html:
+                parts.append(f'<p>{after_html}</p>')
+
+            return '\n'.join(parts)
+
+        return re.sub(r'<p>(.*?)</p>', replace_paragraph, html_content, flags=re.S)
+
     def convert(self, markdown_text: str, include_css: bool = True) -> str:
         """
         Convert Markdown to WeChat-compatible HTML.
@@ -33,6 +154,8 @@ class MarkdownToWeChatConverter:
         Returns:
             HTML string suitable for WeChat Official Account
         """
+        normalized_text = self._normalize_list_spacing(markdown_text)
+
         if MARKDOWN_AVAILABLE:
             # Use markdown library for proper conversion
             extensions = [
@@ -45,7 +168,7 @@ class MarkdownToWeChatConverter:
             ]
 
             html_content = markdown.markdown(
-                markdown_text,
+                normalized_text,
                 extensions=extensions,
                 extension_configs={
                     'codehilite': {
@@ -56,7 +179,9 @@ class MarkdownToWeChatConverter:
             )
         else:
             # Fallback to basic conversion
-            html_content = self._basic_markdown_to_html(markdown_text)
+            html_content = self._basic_markdown_to_html(normalized_text)
+
+        html_content = self._fix_paragraph_lists(html_content)
 
         # Apply WeChat-specific post-processing
         html_content = self._post_process_for_wechat(html_content)
