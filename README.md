@@ -174,12 +174,14 @@ preview_html = preview_generator.generate_from_file(
 
 ### 代码块
 
-```markdown
+使用 4 个反引号可以展示代码块语法：
+
+````text
 ```python
 def hello():
     print('Hello, WeChat!')
 ```
-```
+````
 
 ### 表格
 
