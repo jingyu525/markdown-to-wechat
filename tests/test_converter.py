@@ -128,7 +128,7 @@ print('Hello')
         """Test that HTML is escaped to prevent XSS attacks."""
         converter = MarkdownToWeChatConverter()
         malicious_markdown = '# <script>alert("XSS")</script>'
-        html = converter.convert(malicious)
+        html = converter.convert(malicious_markdown)
         assert '<script>' not in html
         assert '&lt;script&gt;' in html
 

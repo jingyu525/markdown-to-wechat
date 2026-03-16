@@ -8,7 +8,7 @@
 - 🎨 **微信优化样式**：内联 CSS 样式，完美适配微信公众号编辑器
 - 📱 **响应式设计**：自动适配移动端和桌面端
 - 🖼️ **分屏预览**：支持 Markdown 和 HTML 并排对比预览
-- 🚀 **命令行工具**：简单易用的 CLI，支持批量转换
+- 🚀 **命令行工具**：简单易用的 CLI，支持批量转换和全局别名
 - 🔧 **Python API**：可编程接口，轻松集成到你的工作流
 - 🔒 **安全可靠**：HTML 转义防止 XSS 攻击
 
@@ -43,11 +43,45 @@ pip install markdown
 #### 基本转换
 
 ```bash
-# 将 Markdown 文件转换为 HTML
+# 将 Markdown 文件转换为 HTML（自动生成输出文件名）
+markdown-to-wechat article.md
+
+# 或指定输出文件名
 markdown-to-wechat article.md article.html
 
 # 查看转换结果
 open article.html
+```
+
+#### 批量转换目录
+
+```bash
+# 转换目录中所有 Markdown 文件
+markdown-to-wechat ./articles/
+
+# 批量转换并生成分屏预览
+markdown-to-wechat ./articles/ --split
+```
+
+批量转换会：
+- 自动扫描目录中所有 `.md` 文件
+- 为每个文件生成对应的 `.html` 文件
+- 显示转换统计信息（总数、成功、失败）
+
+#### 安装全局别名
+
+```bash
+# 安装简短别名 md2wx
+markdown-to-wechat --install-alias
+source ~/.zshrc  # 或 source ~/.bashrc
+
+# 之后可以使用简短命令
+md2wx article.md
+md2wx ./articles/
+
+# 卸载别名
+markdown-to-wechat --uninstall-alias
+source ~/.zshrc
 ```
 
 #### 生成分屏预览
