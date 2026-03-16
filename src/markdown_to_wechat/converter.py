@@ -22,6 +22,39 @@ class MarkdownToWeChatConverter:
         """Initialize the converter with default CSS styles."""
         self.css_styles = get_wechat_css()
 
+    def _split_table_row(self, row: str) -> list:
+        """
+        Split a table row into cells, handling escaped pipe characters.
+        
+        Args:
+            row: Table row string starting and ending with |
+            
+        Returns:
+            List of cell contents
+        """
+        cells = []
+        current_cell = ""
+        i = 1
+        end = len(row) - 1
+        
+        while i < end:
+            char = row[i]
+            if char == '\\' and i + 1 < end and row[i + 1] == '|':
+                current_cell += '|'
+                i += 2
+                continue
+            elif char == '|':
+                cells.append(current_cell.strip())
+                current_cell = ""
+            else:
+                current_cell += char
+            i += 1
+        
+        if current_cell or cells:
+            cells.append(current_cell.strip())
+        
+        return cells
+
     def _is_markdown_list_line(self, line: str) -> bool:
         stripped = line.lstrip()
         if re.match(r'^(\-|\*|\+)\s+', stripped):
@@ -474,29 +507,24 @@ class MarkdownToWeChatConverter:
                 if in_list:
                     html_lines.append(f'</{list_type}>')
                     in_list = False
-                cells = [cell.strip() for cell in stripped.split('|')[1:-1]]
+                cells = self._split_table_row(stripped)
                 
-                # Check if this is a separator row (|---|---|)
                 if all(cell.replace('-', '').replace(' ', '') == '' for cell in cells):
-                    # Separator row, mark header as done
                     table_header_done = True
                     continue
                 
                 if not in_table:
-                    # Start new table
                     html_lines.append('<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">')
                     in_table = True
                     table_header_done = False
                 
                 if not table_header_done:
-                    # This is the header row
                     html_lines.append('<thead><tr>')
                     for cell in cells:
                         processed_cell = _process_inline_formatting(cell)
                         html_lines.append(f'<th style="border:1px solid #ddd;padding:12px;text-align:left;background-color:#3498db;color:white;font-weight:bold;">{processed_cell}</th>')
                     html_lines.append('</tr></thead><tbody>')
                 else:
-                    # This is a data row
                     html_lines.append('<tr>')
                     for cell in cells:
                         processed_cell = _process_inline_formatting(cell)
