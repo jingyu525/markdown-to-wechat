@@ -146,6 +146,34 @@ print('Hello')
         html_multi = converter.convert(markdown_multi, include_css=False)
         assert html_multi.count('<blockquote') == 1
 
+    def test_blockquote_hard_line_break(self):
+        """Test blockquote with hard line breaks (trailing two spaces)."""
+        converter = MarkdownToWeChatConverter()
+        markdown = '''> **适合人群**：希望深度定制 OpenClaw 的开发者 / 想构建自己工具链的产品经理  
+> **阅读时长**：约 18 分钟  
+> **前置条件**：熟悉 OpenClaw 基础操作，了解 YAML 格式，有基础 CLI 使用经验'''
+        html = converter.convert(markdown, include_css=False)
+        assert '<blockquote' in html
+        assert html.count('<blockquote') == 1
+        assert '<br>' in html
+        assert '适合人群' in html
+        assert '阅读时长' in html
+        assert '前置条件' in html
+
+    def test_blockquote_hard_line_break_mixed(self):
+        """Test blockquote with mixed hard breaks and paragraph breaks."""
+        converter = MarkdownToWeChatConverter()
+        markdown = '''> Line 1 with break  
+> Line 2 with break  
+> Line 3
+>
+> New paragraph'''
+        html = converter.convert(markdown, include_css=False)
+        assert '<blockquote' in html
+        assert html.count('<blockquote') == 1
+        assert '<br>' in html
+        assert html.count('<p') >= 2
+
     def test_table(self):
         """Test table conversion."""
         converter = MarkdownToWeChatConverter()

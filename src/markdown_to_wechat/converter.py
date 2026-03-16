@@ -351,27 +351,49 @@ class MarkdownToWeChatConverter:
                 if not in_blockquote:
                     in_blockquote = True
                     blockquote_buffer = []
-                quote_content = stripped[1:].strip()
-                blockquote_buffer.append(quote_content)
+                # Use original line to detect hard line breaks (trailing two spaces)
+                quote_content = line.lstrip()
+                if quote_content.startswith('>'):
+                    quote_content = quote_content[1:]
+                # Check for hard line break (trailing two spaces)
+                has_hard_break = quote_content.endswith('  ')
+                if has_hard_break:
+                    quote_content = quote_content.rstrip()  # Only strip to preserve the marker
+                else:
+                    quote_content = quote_content.strip()
+                blockquote_buffer.append((quote_content, has_hard_break))
                 continue
             else:
                 if in_blockquote:
+                    # Process buffered lines into paragraphs
+                    # Group lines by hard breaks and empty lines
                     paragraphs = []
                     current_para = []
-                    for line in blockquote_buffer:
-                        if line:
-                            current_para.append(line)
+                    for i, (line_content, has_hard_break) in enumerate(blockquote_buffer):
+                        if line_content:
+                            current_para.append((line_content, has_hard_break))
                         else:
+                            # Empty line - end current paragraph
                             if current_para:
-                                paragraphs.append(' '.join(current_para))
+                                paragraphs.append(current_para)
                                 current_para = []
                     if current_para:
-                        paragraphs.append(' '.join(current_para))
+                        paragraphs.append(current_para)
                     
-                    para_html = ''.join(
-                        f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">{_process_inline_formatting(p)}</p>'
-                        for p in paragraphs if p
-                    )
+                    para_html_parts = []
+                    for para_lines in paragraphs:
+                        # Join lines within paragraph, using <br> for hard breaks
+                        para_content = []
+                        for j, (line_content, has_hard_break) in enumerate(para_lines):
+                            para_content.append(_process_inline_formatting(line_content))
+                            # Add <br> if this line has hard break and it's not the last line
+                            if has_hard_break and j < len(para_lines) - 1:
+                                para_content.append('<br>')
+                        para_html_parts.append(
+                            f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">{"".join(para_content)}</p>'
+                        )
+                    
+                    para_html = ''.join(para_html_parts)
                     html_lines.append(
                         f'<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;">{para_html}</blockquote>'
                     )
@@ -505,20 +527,28 @@ class MarkdownToWeChatConverter:
         if in_blockquote:
             paragraphs = []
             current_para = []
-            for line in blockquote_buffer:
-                if line:
-                    current_para.append(line)
+            for i, (line_content, has_hard_break) in enumerate(blockquote_buffer):
+                if line_content:
+                    current_para.append((line_content, has_hard_break))
                 else:
                     if current_para:
-                        paragraphs.append(' '.join(current_para))
+                        paragraphs.append(current_para)
                         current_para = []
             if current_para:
-                paragraphs.append(' '.join(current_para))
+                paragraphs.append(current_para)
             
-            para_html = ''.join(
-                f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">{_process_inline_formatting(p)}</p>'
-                for p in paragraphs if p
-            )
+            para_html_parts = []
+            for para_lines in paragraphs:
+                para_content = []
+                for j, (line_content, has_hard_break) in enumerate(para_lines):
+                    para_content.append(_process_inline_formatting(line_content))
+                    if has_hard_break and j < len(para_lines) - 1:
+                        para_content.append('<br>')
+                para_html_parts.append(
+                    f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">{"".join(para_content)}</p>'
+                )
+            
+            para_html = ''.join(para_html_parts)
             html_lines.append(
                 f'<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;">{para_html}</blockquote>'
             )
