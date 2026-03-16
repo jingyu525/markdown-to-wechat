@@ -302,6 +302,8 @@ class MarkdownToWeChatConverter:
         code_buffer = []
         in_list = False
         list_type = None
+        in_table = False
+        table_header_done = False
 
         for line in lines:
             stripped = line.strip()
@@ -329,6 +331,13 @@ class MarkdownToWeChatConverter:
 
             # Blockquotes
             if stripped.startswith('>'):
+                if in_table:
+                    html_lines.append('</tbody></table>')
+                    in_table = False
+                    table_header_done = False
+                if in_list:
+                    html_lines.append(f'</{list_type}>')
+                    in_list = False
                 quote_content = _process_inline_formatting(stripped[1:].strip())
                 html_lines.append(
                     f'<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;"><p>{quote_content}</p></blockquote>'
@@ -337,6 +346,10 @@ class MarkdownToWeChatConverter:
 
             # Unordered lists
             if stripped.startswith('- '):
+                if in_table:
+                    html_lines.append('</tbody></table>')
+                    in_table = False
+                    table_header_done = False
                 if not in_list:
                     html_lines.append('<ul style="margin-bottom:16px;padding-left:25px;">')
                     in_list = True
@@ -347,6 +360,10 @@ class MarkdownToWeChatConverter:
 
             # Ordered lists
             if stripped and re.match(r'^\d+\.', stripped):
+                if in_table:
+                    html_lines.append('</tbody></table>')
+                    in_table = False
+                    table_header_done = False
                 if not in_list:
                     html_lines.append('<ol style="margin-bottom:16px;padding-left:25px;">')
                     in_list = True
@@ -364,6 +381,10 @@ class MarkdownToWeChatConverter:
             # Headings (refactored to eliminate duplication)
             heading_match = re.match(r'^(#{1,6})\s+(.+)$', stripped)
             if heading_match:
+                if in_table:
+                    html_lines.append('</tbody></table>')
+                    in_table = False
+                    table_header_done = False
                 if in_list:
                     html_lines.append(f'</{list_type}>')
                     in_list = False
@@ -382,24 +403,56 @@ class MarkdownToWeChatConverter:
 
             # Horizontal rule
             if stripped == '---':
+                if in_table:
+                    html_lines.append('</tbody></table>')
+                    in_table = False
+                    table_header_done = False
                 if in_list:
                     html_lines.append(f'</{list_type}>')
                     in_list = False
                 html_lines.append('<hr style="border:none;border-top:2px solid #e1e4e8;margin:30px 0;">')
                 continue
 
-            # Tables (basic support)
+            # Tables (improved support with proper structure)
             if stripped.startswith('|') and stripped.endswith('|'):
+                if in_list:
+                    html_lines.append(f'</{list_type}>')
+                    in_list = False
                 cells = [cell.strip() for cell in stripped.split('|')[1:-1]]
+                
+                # Check if this is a separator row (|---|---|)
                 if all(cell.replace('-', '').replace(' ', '') == '' for cell in cells):
-                    # Separator row, skip
+                    # Separator row, mark header as done
+                    table_header_done = True
                     continue
-                html_lines.append('<tr>')
-                for cell in cells:
-                    processed_cell = _process_inline_formatting(cell)
-                    html_lines.append(f'<td style="border:1px solid #ddd;padding:12px;text-align:left;">{processed_cell}</td>')
-                html_lines.append('</tr>')
+                
+                if not in_table:
+                    # Start new table
+                    html_lines.append('<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">')
+                    in_table = True
+                    table_header_done = False
+                
+                if not table_header_done:
+                    # This is the header row
+                    html_lines.append('<thead><tr>')
+                    for cell in cells:
+                        processed_cell = _process_inline_formatting(cell)
+                        html_lines.append(f'<th style="border:1px solid #ddd;padding:12px;text-align:left;background-color:#3498db;color:white;font-weight:bold;">{processed_cell}</th>')
+                    html_lines.append('</tr></thead><tbody>')
+                else:
+                    # This is a data row
+                    html_lines.append('<tr>')
+                    for cell in cells:
+                        processed_cell = _process_inline_formatting(cell)
+                        html_lines.append(f'<td style="border:1px solid #ddd;padding:12px;text-align:left;">{processed_cell}</td>')
+                    html_lines.append('</tr>')
                 continue
+            
+            # Close table when we hit a non-table line
+            if in_table and not stripped.startswith('|'):
+                html_lines.append('</tbody></table>')
+                in_table = False
+                table_header_done = False
 
             # Process paragraphs and inline elements
             if stripped:
@@ -409,6 +462,10 @@ class MarkdownToWeChatConverter:
         # Close any remaining list
         if in_list:
             html_lines.append(f'</{list_type}>')
+        
+        # Close any remaining table
+        if in_table:
+            html_lines.append('</tbody></table>')
 
         return '\n'.join(html_lines)
 
