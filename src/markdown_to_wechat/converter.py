@@ -255,6 +255,17 @@ class MarkdownToWeChatConverter:
             """
             processed_line = markdown_text
 
+            # Inline code MUST be processed first to protect its content from other formatting
+            # Use a placeholder to protect code content
+            code_placeholders = []
+            def save_code(match):
+                code_content = html.escape(match.group(1))
+                placeholder = f'\x00CODE{len(code_placeholders)}\x00'
+                code_placeholders.append(f'<code style="font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;background-color:#f4f4f4;padding:2px 5px;border-radius:3px;font-size:0.9em;">{code_content}</code>')
+                return placeholder
+            
+            processed_line = re.sub(r'`([^`]+)`', save_code, processed_line)
+
             # Bold
             processed_line = re.sub(
                 r'\*\*(.+?)\*\*',
@@ -279,19 +290,16 @@ class MarkdownToWeChatConverter:
                 processed_line
             )
 
-            # Inline code (escape content first for security)
-            processed_line = re.sub(
-                r'`([^`]+)`',
-                lambda m: f'<code style="font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;background-color:#f4f4f4;padding:2px 5px;border-radius:3px;font-size:0.9em;">{html.escape(m.group(1))}</code>',
-                processed_line
-            )
-
             # Links
             processed_line = re.sub(
                 r'\[([^\]]+)\]\(([^)]+)\)',
                 r'<a href="\2" style="color:#3498db;text-decoration:none;border-bottom:1px solid #3498db;">\1</a>',
                 processed_line
             )
+
+            # Restore code placeholders
+            for i, code_html in enumerate(code_placeholders):
+                processed_line = processed_line.replace(f'\x00CODE{i}\x00', code_html)
 
             return processed_line
 
