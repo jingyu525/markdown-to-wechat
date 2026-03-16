@@ -108,6 +108,44 @@ print('Hello')
         assert '<blockquote' in html
         assert 'This is a quote' in html
 
+    def test_multiline_blockquote(self):
+        """Test multi-line blockquote conversion."""
+        converter = MarkdownToWeChatConverter()
+        markdown = '''> Line 1
+>
+> Line 2
+>
+> Line 3'''
+        html = converter.convert(markdown, include_css=False)
+        assert '<blockquote' in html
+        assert html.count('<blockquote') == 1
+        assert 'Line 1' in html
+        assert 'Line 2' in html
+        assert 'Line 3' in html
+
+    def test_blockquote_with_empty_lines(self):
+        """Test blockquote with empty lines between paragraphs."""
+        converter = MarkdownToWeChatConverter()
+        markdown = '''> First paragraph
+>
+> Second paragraph'''
+        html = converter.convert(markdown, include_css=False)
+        assert '<blockquote' in html
+        assert html.count('<blockquote') == 1
+        assert html.count('<p') >= 2
+
+    def test_single_vs_multiline_blockquote(self):
+        """Test that single and multi-line blockquotes work correctly."""
+        converter = MarkdownToWeChatConverter()
+        markdown_single = '> Single quote'
+        html_single = converter.convert(markdown_single, include_css=False)
+        assert html_single.count('<blockquote') == 1
+        
+        markdown_multi = '''> Line 1
+> Line 2'''
+        html_multi = converter.convert(markdown_multi, include_css=False)
+        assert html_multi.count('<blockquote') == 1
+
     def test_table(self):
         """Test table conversion."""
         converter = MarkdownToWeChatConverter()

@@ -304,6 +304,8 @@ class MarkdownToWeChatConverter:
         list_type = None
         in_table = False
         table_header_done = False
+        in_blockquote = False
+        blockquote_buffer = []
 
         for line in lines:
             stripped = line.strip()
@@ -329,7 +331,7 @@ class MarkdownToWeChatConverter:
                 code_buffer.append(line)
                 continue
 
-            # Blockquotes
+            # Blockquotes - handle multi-line blockquotes
             if stripped.startswith('>'):
                 if in_table:
                     html_lines.append('</tbody></table>')
@@ -338,11 +340,35 @@ class MarkdownToWeChatConverter:
                 if in_list:
                     html_lines.append(f'</{list_type}>')
                     in_list = False
-                quote_content = _process_inline_formatting(stripped[1:].strip())
-                html_lines.append(
-                    f'<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;"><p>{quote_content}</p></blockquote>'
-                )
+                if not in_blockquote:
+                    in_blockquote = True
+                    blockquote_buffer = []
+                quote_content = stripped[1:].strip()
+                blockquote_buffer.append(quote_content)
                 continue
+            else:
+                if in_blockquote:
+                    paragraphs = []
+                    current_para = []
+                    for line in blockquote_buffer:
+                        if line:
+                            current_para.append(line)
+                        else:
+                            if current_para:
+                                paragraphs.append(' '.join(current_para))
+                                current_para = []
+                    if current_para:
+                        paragraphs.append(' '.join(current_para))
+                    
+                    para_html = ''.join(
+                        f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">{_process_inline_formatting(p)}</p>'
+                        for p in paragraphs if p
+                    )
+                    html_lines.append(
+                        f'<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;">{para_html}</blockquote>'
+                    )
+                    in_blockquote = False
+                    blockquote_buffer = []
 
             # Unordered lists
             if stripped.startswith('- '):
@@ -466,6 +492,28 @@ class MarkdownToWeChatConverter:
         # Close any remaining table
         if in_table:
             html_lines.append('</tbody></table>')
+
+        # Close any remaining blockquote
+        if in_blockquote:
+            paragraphs = []
+            current_para = []
+            for line in blockquote_buffer:
+                if line:
+                    current_para.append(line)
+                else:
+                    if current_para:
+                        paragraphs.append(' '.join(current_para))
+                        current_para = []
+            if current_para:
+                paragraphs.append(' '.join(current_para))
+            
+            para_html = ''.join(
+                f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">{_process_inline_formatting(p)}</p>'
+                for p in paragraphs if p
+            )
+            html_lines.append(
+                f'<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;">{para_html}</blockquote>'
+            )
 
         return '\n'.join(html_lines)
 
