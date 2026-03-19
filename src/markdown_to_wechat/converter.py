@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import Optional
 
 from .config import get_wechat_css, HEADING_STYLES, TITLE_PREFIX_TO_REMOVE
+from .style_registry import StyleRegistry
+from .style_applicator import StyleApplicator
+from .styles import get_default_registry
 
 # Try to import markdown library
 try:
@@ -19,8 +22,13 @@ class MarkdownToWeChatConverter:
     """Convert Markdown to WeChat-compatible HTML."""
 
     def __init__(self):
-        """Initialize the converter with default CSS styles."""
+        """Initialize the converter with default CSS styles and style applicator."""
         self.css_styles = get_wechat_css()
+        
+        # Initialize new architecture components
+        self.registry = get_default_registry()
+        self.applicator = StyleApplicator(self.registry)
+        self.applicator.register_defaults()
 
     def _split_table_row(self, row: str) -> list:
         """
@@ -592,40 +600,17 @@ class MarkdownToWeChatConverter:
         - No external stylesheets
         - Limited JavaScript support
 
+        Uses the new StyleApplicator architecture to inject inline styles.
+
         Args:
             html_content: HTML content to post-process
 
         Returns:
             Post-processed HTML content
         """
-        # Process paragraphs to ensure proper line breaks and formatting
-        html_content = re.sub(
-            r'<p>',
-            '<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">',
-            html_content
-        )
-
-        # Process tables to ensure they're responsive
-        html_content = re.sub(
-            r'<table>',
-            '<table style="width:100%;border-collapse:collapse;margin:20px 0;">',
-            html_content
-        )
-
-        # Process images to add responsive styling
-        html_content = re.sub(
-            r'<img',
-            '<img style="max-width:100%;height:auto;display:block;margin:20px auto;"',
-            html_content
-        )
-
-        # Process code blocks for better display
-        html_content = re.sub(
-            r'<pre>',
-            '<pre style="background-color:#f4f4f4;border:1px solid #ddd;border-radius:5px;padding:15px;margin:20px 0;overflow-x:auto;font-size:14px;line-height:1.5;">',
-            html_content
-        )
-
+        # Use StyleApplicator to inject all inline styles
+        html_content = self.applicator.apply_styles(html_content)
+        
         # Fix spaces in code blocks for WeChat editor (WeChat compresses normal spaces)
         # Only replace spaces in text content, not in HTML attributes
         def fix_pre_spaces(match: re.Match) -> str:
@@ -652,13 +637,6 @@ class MarkdownToWeChatConverter:
             fix_pre_spaces,
             html_content,
             flags=re.S
-        )
-
-        # Process blockquotes
-        html_content = re.sub(
-            r'<blockquote>',
-            '<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;">',
-            html_content
         )
 
         return html_content
