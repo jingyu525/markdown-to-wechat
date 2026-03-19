@@ -222,12 +222,12 @@ class TestProcessors:
         """Test ListProcessor."""
         registry = get_default_registry()
         processor = ListProcessor()
-        
+
         html = '<ul><li>Item</li></ul><ol><li>Item</li></ol>'
         result = processor.process(html, registry)
-        
+
         assert 'padding-left:25px' in result
-        assert 'margin-bottom:8px' in result
+        assert 'line-height:1.75' in result
     
     def test_text_processor(self):
         """Test TextProcessor."""
@@ -445,7 +445,7 @@ Paragraph
 
         # List elements should have styles
         assert 'padding-left:25px' in html  # ul/ol
-        assert 'margin-bottom:8px' in html  # li
+        assert 'line-height:1.75' in html  # li
 
         # Inline formatting in list items should work
         assert '<strong style="font-weight:bold;color:#2c3e50"' in html
@@ -544,7 +544,7 @@ Paragraph
         assert '<strong style="font-weight:bold;color:#2c3e50"' in html
 
         # List items should have style
-        assert 'margin-bottom:8px' in html
+        assert 'line-height:1.75' in html
 
     def test_no_hardcoded_styles_in_converter(self):
         """Test that converter generates clean HTML without hardcoded styles."""
