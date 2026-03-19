@@ -567,3 +567,24 @@ Paragraph
         style_count = len(re.findall(r'style=', raw_html))
         assert style_count == 0, \
             f"Found {style_count} hardcoded style(s) in raw HTML: {raw_html}"
+
+    def test_table_thead_not_broken(self):
+        """Test that <thead> tag is not broken into <th ead>."""
+        converter = MarkdownToWeChatConverter()
+
+        markdown = """| Header 1 | Header 2 |
+|----------|----------|
+| Cell 1   | Cell 2   |
+"""
+
+        html = converter.convert(markdown, include_css=False)
+
+        # Should have correct <thead> tag
+        assert '<thead>' in html or '<thead ' in html
+        # Should NOT have broken <th ead> tag
+        assert '<th ead' not in html.lower()
+        assert '<th ead>' not in html
+
+        # th elements should have styles
+        assert '<th style=' in html
+        assert 'background-color:#3498db' in html
