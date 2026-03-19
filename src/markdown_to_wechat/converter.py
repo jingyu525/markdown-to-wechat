@@ -422,11 +422,11 @@ class MarkdownToWeChatConverter:
                     in_table = False
                     table_header_done = False
                 if not in_list:
-                    html_lines.append('<ul style="margin-bottom:16px;padding-left:25px;">')
+                    html_lines.append('<ul>')
                     in_list = True
                     list_type = 'ul'
                 list_content = _process_inline_formatting(stripped[2:])
-                html_lines.append(f'<li style="margin-bottom:8px;">{list_content}</li>')
+                html_lines.append(f'<li>{list_content}</li>')
                 continue
 
             # Ordered lists
@@ -436,11 +436,11 @@ class MarkdownToWeChatConverter:
                     in_table = False
                     table_header_done = False
                 if not in_list:
-                    html_lines.append('<ol style="margin-bottom:16px;padding-left:25px;">')
+                    html_lines.append('<ol>')
                     in_list = True
                     list_type = 'ol'
                 list_content = _process_inline_formatting(re.sub(r"^\d+\.\s*", "", stripped))
-                html_lines.append(f'<li style="margin-bottom:8px;">{list_content}</li>')
+                html_lines.append(f'<li>{list_content}</li>')
                 continue
 
             # Close list when empty line or non-list item
@@ -479,7 +479,7 @@ class MarkdownToWeChatConverter:
                 if in_list:
                     html_lines.append(f'</{list_type}>')
                     in_list = False
-                html_lines.append('<hr style="border:none;border-top:2px solid #e1e4e8;margin:30px 0;">')
+                html_lines.append('<hr>')
                 continue
 
             # Tables (improved support with proper structure)
@@ -488,27 +488,27 @@ class MarkdownToWeChatConverter:
                     html_lines.append(f'</{list_type}>')
                     in_list = False
                 cells = self._split_table_row(stripped)
-                
+
                 if all(cell.replace('-', '').replace(' ', '') == '' for cell in cells):
                     table_header_done = True
                     continue
-                
+
                 if not in_table:
-                    html_lines.append('<table style="width:100%;border-collapse:collapse;margin:20px 0;font-size:14px;">')
+                    html_lines.append('<table>')
                     in_table = True
                     table_header_done = False
-                
+
                 if not table_header_done:
                     html_lines.append('<thead><tr>')
                     for cell in cells:
                         processed_cell = _process_inline_formatting(cell)
-                        html_lines.append(f'<th style="border:1px solid #ddd;padding:12px;text-align:left;background-color:#3498db;color:white;font-weight:bold;">{processed_cell}</th>')
+                        html_lines.append(f'<th>{processed_cell}</th>')
                     html_lines.append('</tr></thead><tbody>')
                 else:
                     html_lines.append('<tr>')
                     for cell in cells:
                         processed_cell = _process_inline_formatting(cell)
-                        html_lines.append(f'<td style="border:1px solid #ddd;padding:12px;text-align:left;">{processed_cell}</td>')
+                        html_lines.append(f'<td>{processed_cell}</td>')
                     html_lines.append('</tr>')
                 continue
             

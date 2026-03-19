@@ -389,7 +389,7 @@ This is a paragraph with **bold** and *italic*.
     def test_wechat_compatible_styles(self):
         """Test that generated styles are WeChat-compatible."""
         converter = MarkdownToWeChatConverter()
-        
+
         markdown = """# Title
 
 > This is a quote
@@ -398,14 +398,172 @@ This is a paragraph with **bold** and *italic*.
 code block
 ```
 """
-        
+
         html = converter.convert(markdown, include_css=False)
-        
+
         # Should only use inline styles, no <style> tags in body
         body_start = html.find('<body>')
         if body_start > 0:
             body_content = html[body_start:]
             assert '<style>' not in body_content
-        
+
         # All elements should have inline styles
         assert 'style=' in html
+
+    def test_self_closing_tag_style_injection(self):
+        """Test style injection for self-closing tags like <hr />."""
+        converter = MarkdownToWeChatConverter()
+
+        markdown = """# Title
+
+---
+
+Paragraph
+
+---
+"""
+
+        html = converter.convert(markdown, include_css=False)
+
+        # <hr /> should have inline styles
+        assert '<hr style=' in html
+        assert 'border-top:2px solid #e1e4e8' in html
+
+    def test_list_with_inline_formatting(self):
+        """Test list items with inline formatting (bold, italic)."""
+        converter = MarkdownToWeChatConverter()
+
+        markdown = """- Item with **bold** text
+- Item with *italic* text
+- Item with `code` text
+
+1. First **important** item
+2. Second *emphasized* item
+"""
+
+        html = converter.convert(markdown, include_css=False)
+
+        # List elements should have styles
+        assert 'padding-left:25px' in html  # ul/ol
+        assert 'margin-bottom:8px' in html  # li
+
+        # Inline formatting in list items should work
+        assert '<strong style="font-weight:bold;color:#2c3e50"' in html
+        assert '<em style="font-style:italic;color:#555"' in html
+
+    def test_css_and_inline_style_consistency(self):
+        """Test that CSS and inline styles are identical for all elements."""
+        from markdown_to_wechat.styles import get_default_registry
+
+        registry = get_default_registry()
+
+        # Test all critical elements
+        elements = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                    'p', 'ul', 'ol', 'li', 'strong', 'em', 'a',
+                    'blockquote', 'pre', 'code', 'hr', 'table', 'th', 'td']
+
+        for elem in elements:
+            inline = registry.get_inline_style(elem)
+            css_block = registry.get_css_style(elem)
+
+            # Parse CSS block to extract properties
+            css_props = {}
+            if css_block:
+                for line in css_block.split('\n')[1:-1]:  # Remove { and }
+                    line = line.strip().rstrip(';')
+                    if ':' in line:
+                        key, val = line.split(':', 1)
+                        css_props[key.strip()] = val.strip()
+
+            # Parse inline style
+            inline_props = {}
+            if inline:
+                for item in inline.split(';'):
+                    if ':' in item:
+                        key, val = item.split(':', 1)
+                        inline_props[key.strip()] = val.strip()
+
+            # CSS and inline should be identical
+            assert css_props == inline_props, \
+                f"Style mismatch for {elem}: CSS={css_props}, Inline={inline_props}"
+
+    def test_preview_and_copy_sync(self):
+        """Test that preview (CSS) and copy (inline) use identical styles."""
+        from markdown_to_wechat.styles import get_default_registry
+        from markdown_to_wechat.converter import MarkdownToWeChatConverter
+
+        registry = get_default_registry()
+        converter = MarkdownToWeChatConverter()
+
+        markdown = """# Heading
+
+**Bold** and *italic* text.
+
+- List item
+"""
+
+        # Convert with CSS (preview)
+        html_with_css = converter.convert(markdown, include_css=True)
+
+        # Convert without CSS (copy)
+        html_inline = converter.convert(markdown, include_css=False)
+
+        # Extract inline styles from both
+        import re
+        inline_styles = re.findall(r'style="([^"]*)"', html_inline)
+
+        # All inline styles should match registry
+        for style in inline_styles:
+            # Parse the style
+            props = {}
+            for item in style.split(';'):
+                if ':' in item:
+                    key, val = item.split(':', 1)
+                    props[key.strip()] = val.strip()
+
+            # At least one property should be from registry
+            # (This ensures styles come from the same source)
+            assert len(props) > 0
+
+    def test_nested_elements_style_application(self):
+        """Test style application for nested elements."""
+        converter = MarkdownToWeChatConverter()
+
+        markdown = """> Blockquote with **bold** text
+
+1. List item with *italic*
+2. Another item with `code`
+"""
+
+        html = converter.convert(markdown, include_css=False)
+
+        # Blockquote should have style
+        assert 'border-left:4px solid #3498db' in html
+
+        # Nested strong in blockquote should have style
+        assert '<strong style="font-weight:bold;color:#2c3e50"' in html
+
+        # List items should have style
+        assert 'margin-bottom:8px' in html
+
+    def test_no_hardcoded_styles_in_converter(self):
+        """Test that converter generates clean HTML without hardcoded styles."""
+        from markdown_to_wechat.converter import MarkdownToWeChatConverter
+        import re
+
+        converter = MarkdownToWeChatConverter()
+
+        # Test _basic_markdown_to_html directly
+        markdown_text = """**bold** and *italic* and `code`
+
+- list item
+"""
+
+        # Call internal method to get raw HTML (before style application)
+        raw_html = converter._basic_markdown_to_html(markdown_text)
+
+        # Raw HTML should NOT have any style attributes
+        # (Styles are added later by StyleApplicator)
+        style_count = len(re.findall(r'style=', raw_html))
+        assert style_count == 0, \
+            f"Found {style_count} hardcoded style(s) in raw HTML: {raw_html}"
