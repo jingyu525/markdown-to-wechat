@@ -5,7 +5,7 @@ import html
 from pathlib import Path
 from typing import Optional
 
-from .config import get_wechat_css, HEADING_STYLES, TITLE_PREFIX_TO_REMOVE
+from .config import get_wechat_css, TITLE_PREFIX_TO_REMOVE
 from .style_registry import StyleRegistry
 from .style_applicator import StyleApplicator
 from .styles import get_default_registry
@@ -302,41 +302,21 @@ class MarkdownToWeChatConverter:
             def save_code(match):
                 code_content = html.escape(match.group(1))
                 placeholder = f'\x00CODE{len(code_placeholders)}\x00'
-                code_placeholders.append(f'<code style="font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;background-color:#f4f4f4;padding:2px 5px;border-radius:3px;font-size:0.9em;">{code_content}</code>')
+                code_placeholders.append(f'<code>{code_content}</code>')
                 return placeholder
-            
+
             processed_line = re.sub(r'`([^`]+)`', save_code, processed_line)
 
-            # Bold
-            processed_line = re.sub(
-                r'\*\*(.+?)\*\*',
-                r'<strong style="font-weight:bold;color:#2c3e50;">\1</strong>',
-                processed_line
-            )
-            processed_line = re.sub(
-                r'__(.+?)__',
-                r'<strong style="font-weight:bold;color:#2c3e50;">\1</strong>',
-                processed_line
-            )
+            # Bold - no inline styles, will be handled by StyleApplicator
+            processed_line = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', processed_line)
+            processed_line = re.sub(r'__(.+?)__', r'<strong>\1</strong>', processed_line)
 
-            # Italic
-            processed_line = re.sub(
-                r'\*(.+?)\*',
-                r'<em style="font-style:italic;color:#555;">\1</em>',
-                processed_line
-            )
-            processed_line = re.sub(
-                r'_(.+?)_',
-                r'<em style="font-style:italic;color:#555;">\1</em>',
-                processed_line
-            )
+            # Italic - no inline styles, will be handled by StyleApplicator
+            processed_line = re.sub(r'\*(.+?)\*', r'<em>\1</em>', processed_line)
+            processed_line = re.sub(r'_(.+?)_', r'<em>\1</em>', processed_line)
 
-            # Links
-            processed_line = re.sub(
-                r'\[([^\]]+)\]\(([^)]+)\)',
-                r'<a href="\2" style="color:#3498db;text-decoration:none;border-bottom:1px solid #3498db;">\1</a>',
-                processed_line
-            )
+            # Links - no inline styles, will be handled by StyleApplicator
+            processed_line = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', processed_line)
 
             # Restore code placeholders
             for i, code_html in enumerate(code_placeholders):
@@ -366,9 +346,7 @@ class MarkdownToWeChatConverter:
                     code_html = html.escape('\n'.join(code_buffer))
                     code_html = code_html.replace(' ', '&nbsp;')
                     code_html = code_html.replace('\t', '&nbsp;&nbsp;&nbsp;&nbsp;')
-                    html_lines.append(
-                        f'<pre style="background-color:#f4f4f4;border:1px solid #ddd;border-radius:5px;padding:15px;margin:20px 0;overflow-x:auto;font-size:14px;line-height:1.5;"><code style="background-color:transparent;padding:0;border-radius:0;">{code_html}</code></pre>'
-                    )
+                    html_lines.append(f'<pre><code>{code_html}</code></pre>')
                     code_buffer = []
                     in_code_block = False
                 else:
@@ -430,14 +408,10 @@ class MarkdownToWeChatConverter:
                             # Add <br> if this line has hard break and it's not the last line
                             if has_hard_break and j < len(para_lines) - 1:
                                 para_content.append('<br>')
-                        para_html_parts.append(
-                            f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">{"".join(para_content)}</p>'
-                        )
-                    
+                    para_html_parts.append(f'<p>{"".join(para_content)}</p>')
+
                     para_html = ''.join(para_html_parts)
-                    html_lines.append(
-                        f'<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;">{para_html}</blockquote>'
-                    )
+                    html_lines.append(f'<blockquote>{para_html}</blockquote>')
                     in_blockquote = False
                     blockquote_buffer = []
 
@@ -493,9 +467,7 @@ class MarkdownToWeChatConverter:
                 if title_text.startswith(TITLE_PREFIX_TO_REMOVE):
                     title_text = title_text[len(TITLE_PREFIX_TO_REMOVE):]
 
-                html_lines.append(
-                    f'<h{level} style="{HEADING_STYLES[level]}">{title_text}</h{level}>'
-                )
+                html_lines.append(f'<h{level}>{title_text}</h{level}>')
                 continue
 
             # Horizontal rule
@@ -549,7 +521,7 @@ class MarkdownToWeChatConverter:
             # Process paragraphs and inline elements
             if stripped:
                 processed_line = _process_inline_formatting(stripped)
-                html_lines.append(f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;">{processed_line}</p>')
+                html_lines.append(f'<p>{processed_line}</p>')
 
         # Close any remaining list
         if in_list:
@@ -580,14 +552,10 @@ class MarkdownToWeChatConverter:
                     para_content.append(_process_inline_formatting(line_content))
                     if has_hard_break and j < len(para_lines) - 1:
                         para_content.append('<br>')
-                para_html_parts.append(
-                    f'<p style="margin-bottom:16px;text-align:left;line-height:1.75;word-wrap:break-word;word-break:break-word;white-space:pre-wrap;">{"".join(para_content)}</p>'
-                )
-            
+                para_html_parts.append(f'<p>{"".join(para_content)}</p>')
+
             para_html = ''.join(para_html_parts)
-            html_lines.append(
-                f'<blockquote style="margin:20px 0;padding:15px 20px;background-color:#f8f9fa;border-left:4px solid #3498db;color:#555;">{para_html}</blockquote>'
-            )
+            html_lines.append(f'<blockquote>{para_html}</blockquote>')
 
         return '\n'.join(html_lines)
 

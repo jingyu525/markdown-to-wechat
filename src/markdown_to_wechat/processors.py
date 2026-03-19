@@ -64,14 +64,26 @@ class ElementProcessor(ABC):
         if not style:
             return html_content
         
-        # Pattern to match opening tag
-        # Matches: <tag> or <tag attr="value">
+        # Pattern to match opening tag (including self-closing tags like <hr />)
+        # Matches: <tag>, <tag attr="value">, <tag/>, <tag attr="value"/>
         # Negative lookahead (?![^>]*style=) ensures we don't match tags with existing style
-        pattern = rf'<{tag}(?![^>]*style=)([^>]*)>'
+        # Capture group 1: all attributes including the optional /
+        pattern = rf'<{tag}(?![^>]*style=)([^>]*?)(/?>)'
         
         def replace_tag(match):
-            attrs = match.group(1)
-            return f'<{tag}{attrs} style="{style}">'
+            attrs = match.group(1).strip()
+            closing = match.group(2)
+            # Handle self-closing tags (attrs may contain trailing /)
+            if attrs.endswith('/'):
+                attrs = attrs[:-1].strip()
+                closing = '/>'
+            elif closing == '/>':
+                closing = '/>'
+            # Build the tag with style
+            if attrs:
+                return f'<{tag} {attrs} style="{style}"{closing}'
+            else:
+                return f'<{tag} style="{style}"{closing}'
         
         return re.sub(pattern, replace_tag, html_content, flags=re.IGNORECASE)
 
