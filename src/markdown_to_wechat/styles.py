@@ -145,9 +145,6 @@ def get_list_styles() -> Dict[str, StyleDefinition]:
     
     styles['li'] = StyleDefinition.create(
         element='li',
-        line_height='1.75',
-        word_wrap='break-word',
-        word_break='break-word',
         margin_bottom='0',
         priority=81
     )
