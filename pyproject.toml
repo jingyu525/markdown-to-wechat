@@ -33,7 +33,9 @@ classifiers = [
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Topic :: Text Processing :: Markup :: HTML',
 ]
-dependencies = []
+dependencies = [
+    'markdown>=3.4.0',
+]
 
 [project.optional-dependencies]
 dev = [
