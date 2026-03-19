@@ -182,31 +182,32 @@ def convert_directory(
     for md_file in md_files:
         output_file = md_file.with_suffix('.html')
         print(f"转换: {md_file.name} -> {output_file.name}")
-        
+
         try:
-            html_content = converter.convert_file(
-                str(md_file),
-                include_css=not no_css
-            )
-            
             if split_mode and preview_generator:
-                preview_html = preview_generator.generate_from_file(
+                # Let PreviewGenerator handle the conversion internally
+                preview_generator.generate_from_file(
                     str(md_file),
-                    html_content,
+                    html_content=None,  # Will be generated internally
                     output_file=str(output_file),
                     split=True
                 )
             else:
+                # For non-split mode, convert with CSS
+                html_content = converter.convert_file(
+                    str(md_file),
+                    include_css=not no_css
+                )
                 with open(output_file, 'w', encoding='utf-8') as f:
                     f.write(html_content)
-            
+
             print(f"✅ 成功: {output_file}")
             success += 1
-            
+
         except Exception as e:
             print(f"❌ 错误: 转换失败 {md_file.name}: {e}", file=sys.stderr)
             failed += 1
-        
+
         print()
     
     print("=" * 50)
@@ -370,9 +371,10 @@ def main() -> None:
     if args.split:
         try:
             preview_generator = PreviewGenerator()
+            # Let PreviewGenerator handle the conversion internally
             preview_generator.generate_from_file(
                 str(input_path),
-                html_content,
+                html_content=None,  # Will be generated internally
                 output_file=output_file,
                 split=True
             )
@@ -385,6 +387,11 @@ def main() -> None:
             print(f"错误: 生成预览失败: {e}", file=sys.stderr)
             sys.exit(1)
     else:
+        # For non-split mode, use the converted HTML with CSS
+        html_content = converter.convert_file(
+            str(input_path),
+            include_css=not args.no_css
+        )
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(html_content)
         print(f"✅ 转换成功: {output_file}")

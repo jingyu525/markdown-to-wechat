@@ -244,3 +244,194 @@ def get_template_path(template_name: str) -> str:
     """
     from pathlib import Path
     return Path(__file__).parent.parent.parent / 'templates' / template_name
+
+
+def get_preview_styles() -> str:
+    """
+    Get CSS styles for preview templates.
+    
+    This method provides styles for preview functionality, including table styles
+    that are essential for proper rendering in split preview mode.
+    
+    Returns:
+        CSS styles as a string (without <style> tags)
+    """
+    return '''
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* Code block styles */
+        pre {
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            background-color: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        /* Blockquote styles */
+        blockquote {
+            margin: 20px 0;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            color: #555;
+            line-height: 1.75;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        /* Paragraph styles */
+        p {
+            margin-bottom: 16px;
+            text-align: left;
+            line-height: 1.75;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        /* Heading styles */
+        h1 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #34495e;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        h3 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 12px;
+        }
+
+        h4 {
+            font-size: 17px;
+            font-weight: bold;
+            color: #666;
+            margin-top: 18px;
+            margin-bottom: 10px;
+        }
+
+        h5 {
+            font-size: 16px;
+            font-weight: bold;
+            color: #777;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+
+        h6 {
+            font-size: 15px;
+            font-weight: bold;
+            color: #888;
+            margin-top: 14px;
+            margin-bottom: 8px;
+        }
+
+        /* List styles */
+        ul, ol {
+            margin-bottom: 16px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            line-height: 1.75;
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+
+        /* Link styles */
+        a {
+            color: #3498db;
+            text-decoration: none;
+            border-bottom: 1px solid #3498db;
+        }
+
+        a:hover {
+            color: #2980b9;
+        }
+
+        /* Strong and emphasis styles */
+        strong {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        em {
+            font-style: italic;
+            color: #555;
+        }
+
+        /* Image styles */
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+        }
+
+        /* Horizontal rule styles */
+        hr {
+            border: none;
+            border-top: 2px solid #e1e4e8;
+            margin: 30px 0;
+        }
+    '''
